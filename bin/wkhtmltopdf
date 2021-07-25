@@ -6,7 +6,6 @@
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy
 # of the License at http://www.apache.org/licenses/LICENSE-2.0
-
 require 'rbconfig'
 require 'zlib'
 
@@ -49,18 +48,20 @@ suffix = case RbConfig::CONFIG['host_os']
 
 suffix = ENV['WKHTMLTOPDF_HOST_SUFFIX'] unless ENV['WKHTMLTOPDF_HOST_SUFFIX'].to_s.empty?
 
-binary = "#{__FILE__}_#{suffix}"
+installation_folder = ENV['WKHTMLTOPDF_INSTLLATION_FOLDER'] || '/tmp'
+binary = "#{__FILE__}_#{suffix}.gz"
+exec_file = "#{installation_folder}/wkhtmltopdf_#{suffix}"
 
-if File.exist?("#{binary}.gz") && !File.exist?(binary)
-  File.open binary, 'wb', 0o755 do |file|
-    Zlib::GzipReader.open("#{binary}.gz") { |gzip| file << gzip.read }
+if File.exist?(binary) && !File.exist?(exec_file)
+  File.open exec_file, 'wb', 0o755 do |file|
+    Zlib::GzipReader.open(binary) { |gzip| file << gzip.read }
   end
 end
 
-unless File.exist? binary
+unless File.exist? exec_file
   raise 'Invalid platform, must be running on Ubuntu 16.04/18.04/20.04 ' \
         'CentOS 6/7/8, Debian 9/10, archlinux amd64, or intel-based Cocoa macOS ' \
-        "(missing binary: #{binary})."
+        "(missing binary: #{exec_file})."
 end
 
-exec *$*.unshift(binary)
+exec *$*.unshift(exec_file)
